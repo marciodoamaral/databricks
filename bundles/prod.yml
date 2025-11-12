@@ -1,0 +1,17 @@
+bundle:
+  name: financial-cdc-pipeline
+
+resources:
+  pipeline:
+    cdc_pipeline:
+      name: "Financial CDC Pipeline"
+      development: false
+      catalog: main
+      target: finance_gold
+      storage: "s3a://dlt-prod-storage/"
+      configuration:
+        spark.sql.legacy.timeParserPolicy: CORRECTED
+      libraries:
+        - "dlt_pipeline/01_ingest_raw.py"
+        - "dlt_pipeline/02_parse_cdc.sql"
+        - "dlt_pipeline/03_scd2_accounts.py"
