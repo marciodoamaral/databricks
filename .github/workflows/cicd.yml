@@ -1,22 +1,54 @@
 name: Deploy CDC Pipeline
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  # Allow manual trigger as well
+  workflow_dispatch:
+
+# Permissions required for secure access (OIDC/Token)
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    name: 'Deploy Bundle to Production'
+    
+    # 1. Use a defined GitHub environment for secrets management
+    environment: Production
+    
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-      - name: Install Databricks CLI
-        run: pip install databricks-cli
-      - name: Deploy Bundle
+      - name: Checkout Repository
+        uses: actions/checkout@v4 # Updated to v4 for compatibility
+
+      # ------------------------------------------------------------------------
+      # FIX 1: Use the official setup-cli action to install the modern CLI
+      # This replaces the entire "Set up Python" and "Install Databricks CLI" steps
+      - name: Setup Databricks CLI
+        uses: databricks/setup-cli@v0 # Recommended action
+      # ------------------------------------------------------------------------
+
+      # 2. Configure Authentication
+      # The Databricks CLI automatically finds these environment variables.
+      - name: Configure Databricks Host/Token
         run: |
-          databricks bundle deploy -t prod
-          databricks bundle run wait --step update-prod-pipeline
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          echo "DATABRICKS_HOST=${{ secrets.DATABRICKS_HOST }}" >> $GITHUB_ENV
+          echo "DATABRICKS_TOKEN=${{ secrets.DATABRICKS_TOKEN }}" >> $GITHUB_ENV
+          
+      # 3. Validate and Deploy the Bundle
+      # Assuming you have a 'prod' target defined in databricks-bundle.yml
+      - name: Deploy Bundle
+        run: databricks bundle deploy -t prod
+        working-directory: . # Execute from root directory
+        
+      # 4. Run the deployed job/task (Optional validation step)
+      - name: Run Job for Validation
+        # Assuming 'wait' is a script or job defined in your bundle
+        run: databricks bundle run wait --step update-prod-pipeline
+        working-directory: .
+        
+        # NOTE: Environment variables are set in the preceding step and persist
+        # via $GITHUB_ENV, so they don't need to be defined here again.
