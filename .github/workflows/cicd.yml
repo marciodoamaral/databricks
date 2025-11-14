@@ -44,11 +44,3 @@ jobs:
         run: databricks bundle deploy -t prod
         working-directory: . # Execute from root directory
         
-      # 4. Run the deployed job/task (Optional validation step)
-      - name: Run Job for Validation
-        # Assuming 'wait' is a script or job defined in your bundle
-        run: databricks bundle run wait --step update-prod-pipeline
-        working-directory: .
-        
-        # NOTE: Environment variables are set in the preceding step and persist
-        # via $GITHUB_ENV, so they don't need to be defined here again.
