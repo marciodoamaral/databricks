@@ -1,0 +1,50 @@
+bundle:
+  name: financial-cdc-pipeline
+
+# ----------------------------------------------------
+# 1. ENVIRONMENTS (Defines host/auth for deployment targets)
+# ----------------------------------------------------
+environments:
+  # Define the host/auth used by the 'prod' target.
+  # This uses the DATABRICKS_HOST set in GitHub Secrets/ENV.
+  production:
+    host: ${{env.DATABRICKS_HOST}}
+    # Authentication (PAT or OAuth) is inherited from the execution environment.
+
+resources:
+  pipelines:
+    # This is the pipeline TEMPLATE (it defines what the pipeline looks like)
+    cdc_pipeline:
+      name: "Financial CDC Pipeline"
+      
+      # These properties are defined in the TEMPLATE
+      configuration:
+        spark.sql.legacy.timeParserPolicy: CORRECTED
+        
+      libraries:
+        - notebook:
+            path: dlt_pipeline/01_ingest_raw.py
+        - notebook:
+            path: dlt_pipeline/02_parse_cdc.sql
+        - notebook:
+            path: dlt_pipeline/03_scd2_accounts.py
+
+# ----------------------------------------------------
+# 3. TARGETS (Defines HOW and WHERE to deploy the assets)
+# ----------------------------------------------------
+targets:
+  prod:
+    # Links this target to the 'production' host defined above
+    environment: production
+    
+    # Deployment-specific overrides for the 'cdc_pipeline' resource
+    resources:
+      pipelines:
+        cdc_pipeline:
+          # Deployment Settings (These parameters are unique to the target environment)
+          catalog: main
+          target: finance_gold # Target schema for DLT tables
+          storage: "s3a://dlt-prod-storage/"
+          
+          # Deployment Mode: Ensures this pipeline runs in Production mode
+          development: false
