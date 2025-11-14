@@ -28,7 +28,7 @@ jobs:
       # FIX 1: Use the official setup-cli action to install the modern CLI
       # This replaces the entire "Set up Python" and "Install Databricks CLI" steps
       - name: Setup Databricks CLI
-        uses: databricks/setup-cli@v0 # Recommended action
+        uses: databricks/setup-cli@main # Recommended action
       # ------------------------------------------------------------------------
 
       # 2. Configure Authentication
