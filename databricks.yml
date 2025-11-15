@@ -4,7 +4,7 @@ bundle:
 targets:
   prod:
     workspace:
-      host: https://dbc-5247c3ae-3d37.cloud.databricks.com
+      host: ${{env.DATABRICKS_HOST}} 
     resources:
       jobs:
         my_first_job:
